@@ -28,3 +28,19 @@ async function bootstrap() {
 }
 
 bootstrap()
+
+/**
+ * - register manager
+ * - login
+ * - profile manager
+ * - register driver
+ * - profile driver
+ * - delete driver
+ * - create storage
+ * - create product
+ * - create car
+ * - create shipping
+ * - update shipping
+ * - iot storage
+ * - iot car
+ * */

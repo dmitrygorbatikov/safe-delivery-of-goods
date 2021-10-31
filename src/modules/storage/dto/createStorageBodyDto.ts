@@ -14,7 +14,7 @@ export class CreateStorageBodyDto {
         example: 'address'
     })
     @Prop()
-    address: number
+    address: string
 
     @ApiProperty({
         description: 'latitude',

@@ -13,14 +13,15 @@ export class ManagerController {
         name: 'token'
     })
     @Get()
-    public async getManagerProfile(@Headers() headers){
-        try{
-            return {manager: await this.managerService.checkManagerRole(headers.token)}
-        }
-        catch (e){
+    public async getManagerProfile(@Headers() headers) {
+        try {
+            const manager = await this.managerService.checkManagerRole(headers.token)
+            if (!manager) {
+                return {error: "Manager not found"}
+            }
+            return {manager}
+        } catch (e) {
             return {error: e.message}
         }
     }
-
-
 }

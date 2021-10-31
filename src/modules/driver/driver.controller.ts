@@ -1,8 +1,8 @@
-import {Body, Controller, Post, Headers, Get} from '@nestjs/common';
+import {Body, Controller, Post, Headers, Get, Param} from '@nestjs/common';
 import {DriverService} from "./driver.service";
 import {ManagerService} from "../manager/manager.service";
 import {AuthService} from "../auth/auth.service";
-import {ApiBody, ApiCreatedResponse, ApiHeader, ApiTags} from "@nestjs/swagger";
+import {ApiBody, ApiCreatedResponse, ApiHeader, ApiParam, ApiTags} from "@nestjs/swagger";
 import {RegisterDriverBodyDto} from "./dto/registerDriverBodyDto";
 import {ErrorsEnum, RolesEnum} from "../../enums/enums";
 import {getRegisterDate} from "../../helper/functions";
@@ -46,12 +46,11 @@ export class DriverController {
                 email,
                 password: hashedPassword,
                 registerDate: getRegisterDate(),
-                role: RolesEnum.driver
+                role: RolesEnum.driver,
+                managerId: manager._id
             })
 
-            return {
-                token: this.authService.accessToken(driver._id, name, surname, driver.role)
-            }
+            return {driver}
 
         } catch (e) {
             return {error: e.message}
@@ -85,14 +84,64 @@ export class DriverController {
     @ApiCreatedResponse({
         type: Driver
     })
-    @Get()
+    @Get('/profile')
     public async getDriverProfile(@Headers() headers) {
         try {
             const decodeToken = await this.authService.decodeToken(headers.token)
             if (!decodeToken) {
                 return {error: ErrorsEnum.userNotFound}
             }
-            return {user: await this.driverService.findById(decodeToken.id)}
+            const driver = await this.driverService.findById(decodeToken.id)
+            if (!driver) {
+                return {error: 'Driver not found'}
+            }
+            return {driver}
+        } catch (e) {
+            return {error: e.message}
+        }
+    }
+
+    @ApiHeader({
+        name: 'token'
+    })
+    @ApiCreatedResponse({
+        type: Driver
+    })
+    @ApiParam({
+        name: 'id'
+    })
+    @Get('/get-by-manager/:id')
+    public async getDriverById(@Headers() headers, @Param() params) {
+        try {
+            const {id} = params
+            const manager = await this.managerService.checkManagerRole(headers.token)
+            if (!manager) {
+                return {error: ErrorsEnum.notEnoughRights}
+            }
+            const driver = await this.driverService.findById(id)
+            if (!driver) {
+                return {error: 'Driver not found'}
+            }
+            return {driver}
+        } catch (e) {
+            return {error: e.message}
+        }
+    }
+
+    @ApiHeader({
+        name: 'token'
+    })
+    @ApiCreatedResponse({
+        type: Driver
+    })
+    @Get()
+    public async getDriversListByManager(@Headers() headers) {
+        try {
+            const manager = await this.managerService.checkManagerRole(headers.token)
+            if (!manager) {
+                return {error: ErrorsEnum.notEnoughRights}
+            }
+            return { drivers: await this.driverService.findByManager(manager._id)}
         } catch (e) {
             return {error: e.message}
         }

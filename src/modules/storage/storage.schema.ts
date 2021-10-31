@@ -18,7 +18,7 @@ export class Storage {
         example: 'address'
     })
     @Prop()
-    address: number
+    address: string
 
     @ApiProperty({
         description: 'indicators',

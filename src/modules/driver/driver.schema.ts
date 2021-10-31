@@ -47,6 +47,13 @@ export class Driver {
     })
     @Prop()
     registerDate: number
+
+    @ApiProperty({
+        description: 'managerId',
+        example: '23452ttfe3653tegf3'
+    })
+    @Prop()
+    managerId: string
 }
 
 export const DriverSchema = SchemaFactory.createForClass(Driver)

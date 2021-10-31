@@ -1,5 +1,4 @@
 import {ApiProperty} from "@nestjs/swagger";
-import {Prop} from "@nestjs/mongoose";
 
 export class CreateProductBodyDto {
     @ApiProperty({
@@ -15,14 +14,8 @@ export class CreateProductBodyDto {
     weight: number
 
     @ApiProperty({
-        description: 'storageFrom',
-        example: '2345ge54y2t234t6'
-    })
-    storageFrom: string
-
-    @ApiProperty({
-        description: 'storageTo',
+        description: 'storageId',
         example: 'fe45yeyh56uy5u6y4'
     })
-    storageTo: string
+    storageId: string
 }

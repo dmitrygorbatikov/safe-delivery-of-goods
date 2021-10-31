@@ -16,7 +16,7 @@ export class StorageService {
         return this.storageModel.findById(_id)
     }
 
-    public find(){
-        return this.storageModel.find()
+    public findByManager(managerId: string){
+        return this.storageModel.find({managerId})
     }
 }

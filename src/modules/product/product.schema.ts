@@ -21,18 +21,11 @@ export class Product {
     weight: number
 
     @ApiProperty({
-        description: 'storageFrom',
-        example: '2345ge54y2t234t6'
-    })
-    @Prop()
-    storageFrom: string
-
-    @ApiProperty({
-        description: 'storageTo',
+        description: 'storageId',
         example: 'fe45yeyh56uy5u6y4'
     })
     @Prop()
-    storageTo: string
+    storageId: string
 
     @ApiProperty({
         description: 'carId',
@@ -47,6 +40,13 @@ export class Product {
     })
     @Prop()
     registerDate: number
+
+    @ApiProperty({
+        description: 'managerId',
+        example: '23452ttfe3653tegf3'
+    })
+    @Prop()
+    managerId: string
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product)

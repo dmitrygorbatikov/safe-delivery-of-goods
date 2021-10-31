@@ -1,8 +1,8 @@
-import {Body, Controller, Post, Headers} from '@nestjs/common';
+import {Body, Controller, Get, Headers, Param, Post} from '@nestjs/common';
 import {ProductService} from "./product.service";
 import {CreateProductBodyDto} from "./dto/createProductBodyDto";
 import {ManagerService} from "../manager/manager.service";
-import {ApiBody, ApiCreatedResponse, ApiHeader, ApiTags} from "@nestjs/swagger";
+import {ApiBody, ApiCreatedResponse, ApiHeader, ApiParam, ApiTags} from "@nestjs/swagger";
 import {ErrorsEnum, ProductEnum} from "../../enums/enums";
 import {getRegisterDate} from "../../helper/functions";
 import {StorageService} from "../storage/storage.service";
@@ -26,35 +26,90 @@ export class ProductController {
     @Post()
     public async createProduct(@Body() body: CreateProductBodyDto, @Headers() headers) {
         try {
-            const {storageFrom, storageTo, weight, title} = body
+            const {storageId, weight, title} = body
             const manager = await this.managerService.checkManagerRole(headers.token)
             if (!manager) {
                 return {error: ErrorsEnum.notEnoughRights}
             }
-            const storageFromCheck = await this.storageService.findById(storageFrom)
-            if (!storageFromCheck) {
-                return {error: ErrorsEnum.storageNotFound}
-            }
-            if (storageTo === storageFrom) {
-                return {error: 'Select right storages'}
-            }
-            const storageToCheck = await this.storageService.findById(storageTo)
-            if (!storageToCheck) {
+            const storage = await this.storageService.findById(storageId)
+            if (!storage) {
                 return {error: ErrorsEnum.storageNotFound}
             }
             if (weight < 0 || weight > ProductEnum.maxWeight) {
-                return {error: 'Weight can`t be more than 50000'}
+                return {error: `Weight can't be more than ${ProductEnum.maxWeight}`}
             }
             return {
                 product: await this.productService.create({
                     carId: '',
                     registerDate: getRegisterDate(),
-                    storageFrom,
                     title,
-                    storageTo,
-                    weight
+                    storageId,
+                    weight,
+                    managerId: manager._id
                 })
             }
+        } catch (e) {
+            return {error: e.message}
+        }
+    }
+
+    @ApiHeader({
+        name: 'token'
+    })
+    @ApiParam({
+        name: 'id'
+    })
+    @Get('/:id')
+    public async getProductById(@Headers() headers, @Param() params) {
+        try {
+            const {id} = params
+            const manager = await this.managerService.checkManagerRole(headers.token)
+            if (!manager) {
+                return {error: ErrorsEnum.notEnoughRights}
+            }
+            const product = await this.productService.findById(id)
+            if (!product) {
+                return {error: 'Product not found'}
+            }
+            return {product}
+        } catch (e) {
+            return {error: e.message}
+        }
+    }
+
+    @ApiHeader({
+        name: 'token'
+    })
+    @ApiParam({
+        name: 'id'
+    })
+    @Get('/storage/:id')
+    public async getProductsByStorageId(@Headers() headers, @Param() params) {
+        try {
+            const {id} = params
+            const manager = await this.managerService.checkManagerRole(headers.token)
+            if (!manager) {
+                return {error: ErrorsEnum.notEnoughRights}
+            }
+            const products = await this.productService.findByStorageId(id)
+            return {products}
+        } catch (e) {
+            return {error: e.message}
+        }
+    }
+
+    @ApiHeader({
+        name: 'token'
+    })
+    @Get()
+    public async getProductsByManager(@Headers() headers) {
+        try {
+            const manager = await this.managerService.checkManagerRole(headers.token)
+            if (!manager) {
+                return {error: ErrorsEnum.notEnoughRights}
+            }
+            const products = await this.productService.findByManager(manager._id)
+            return {products}
         } catch (e) {
             return {error: e.message}
         }

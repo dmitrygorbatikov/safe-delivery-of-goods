@@ -8,12 +8,12 @@ async function bootstrap() {
   const PORT = process.env.PORT || 5000
 
   const config = new DocumentBuilder()
-      .setTitle('Swagger documentation')
+      .setTitle('Swagger documentation for program system for safe delivery of goods')
       .setDescription(
-          'This is an application for a hospital that helps doctors in automating the dispensing of medicines and helping to keep track of their safety.',
+          'description ?'
       )
       .setVersion('1.0')
-      .addTag('hospital')
+      .addTag('goods')
       .build()
   const document = SwaggerModule.createDocument(app, config)
   SwaggerModule.setup('api', app, document)

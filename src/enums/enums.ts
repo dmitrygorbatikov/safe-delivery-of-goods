@@ -1,7 +1,11 @@
 export enum RolesEnum {
-   'doctor' = 'doctor',
-   'patient' = 'patient',
+   'manager' = 'manager',
+   'driver' = 'driver',
    'admin' = 'admin',
+}
+
+export enum ProductEnum {
+   'maxWeight' = 50000
 }
 
 export enum ErrorsEnum {

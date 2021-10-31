@@ -8,4 +8,16 @@ export class DriverService {
     constructor(
         @InjectModel(Driver.name) private driverModel: Model<DriverDocument>,
     ) {}
+
+    public create(body: Driver) {
+        return new this.driverModel(body).save()
+    }
+
+    public findById(_id: string){
+        return this.driverModel.findById(_id)
+    }
+
+    public findByEmail(email: string){
+        return this.driverModel.findOne({email})
+    }
 }

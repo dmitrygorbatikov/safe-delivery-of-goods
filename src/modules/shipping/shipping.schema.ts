@@ -1,6 +1,7 @@
 import {Prop, Schema, SchemaFactory} from '@nestjs/mongoose'
 import {Document} from 'mongoose'
 import {ApiProperty} from "@nestjs/swagger";
+import {ShippingGoodsDto} from "./dto/shippingGoodsDto";
 
 export type ShippingDocument = Shipping & Document
 
@@ -32,7 +33,7 @@ export class Shipping {
         example: '23452ttfe3653tegf3'
     })
     @Prop()
-    goods: Array<any>
+    goods: Array<ShippingGoodsDto>
 
     @ApiProperty({
         description: 'managerId',

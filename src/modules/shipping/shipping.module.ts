@@ -6,10 +6,19 @@ import {ManagerSharedModule} from "../manager/manager-shared.module";
 import {CarSharedModule} from "../car/car-shared.module";
 import {DriverSharedModule} from "../driver/driver-shared.module";
 import {ProductSharedModule} from "../product/product-shared.module";
+import {StorageSharedModule} from "../storage/storage-shared.module";
 
 @Module({
     controllers: [ShippingController],
-    imports: [ShippingSharedModule, AuthSharedModule, ManagerSharedModule, CarSharedModule, DriverSharedModule, ProductSharedModule],
+    imports: [
+        ShippingSharedModule,
+        AuthSharedModule,
+        ManagerSharedModule,
+        CarSharedModule,
+        DriverSharedModule,
+        ProductSharedModule,
+        StorageSharedModule
+    ],
 })
 export class ShippingModule {
 }

@@ -1,10 +1,10 @@
-import {Body, Controller, Post, Headers, Get, Param} from '@nestjs/common';
+import {Body, Controller, Get, Headers, Param, Post, Put} from '@nestjs/common';
 import {StorageService} from "./storage.service";
 import {ApiBody, ApiCreatedResponse, ApiHeader, ApiParam, ApiTags} from "@nestjs/swagger";
 import {ManagerService} from "../manager/manager.service";
 import {CreateStorageBodyDto} from "./dto/createStorageBodyDto";
 import {ErrorsEnum} from "../../enums/enums";
-import {getRegisterDate} from "../../helper/functions";
+import {getRandomStorageIndicators, getRegisterDate} from "../../helper/functions";
 import {Storage} from "./storage.schema";
 
 @ApiTags('storage')
@@ -50,15 +50,14 @@ export class StorageController {
         name: 'token'
     })
     @Get('/manager')
-    public async getStoragesByManager(@Headers() headers){
-        try{
+    public async getStoragesByManager(@Headers() headers) {
+        try {
             const manager = await this.managerService.checkManagerRole(headers.token)
             if (!manager) {
                 return {error: ErrorsEnum.notEnoughRights}
             }
             return {storages: await this.storageService.findByManager(manager._id)}
-        }
-        catch (e) {
+        } catch (e) {
             return {error: e.message}
         }
     }
@@ -70,20 +69,42 @@ export class StorageController {
         name: 'id'
     })
     @Get('/:id')
-    public async getStorageById(@Headers() headers, @Param() params){
-        try{
+    public async getStorageById(@Headers() headers, @Param() params) {
+        try {
             const {id} = params
             const manager = await this.managerService.checkManagerRole(headers.token)
             if (!manager) {
                 return {error: ErrorsEnum.notEnoughRights}
             }
             const storage = await this.storageService.findById(id)
-            if(!storage){
+            if (!storage) {
                 return {error: ErrorsEnum.storageNotFound}
             }
             return {storage}
+        } catch (e) {
+            return {error: e.message}
         }
-        catch (e) {
+    }
+
+    @Put('/update-statistic')
+    public async updateStorageStatistic(@Headers() headers) {
+        try {
+            const storages = await this.storageService.find()
+
+            const indicators = []
+
+            for (let i = 0; i < storages.length; i++) {
+                indicators.push(storages[i].indicators)
+                indicators[i].push(getRandomStorageIndicators())
+            }
+            for (let i = 0; i < storages.length; i++) {
+                await this.storageService.updateStorageStatistic(storages[i]._id, {
+                    indicators: indicators[i],
+                })
+            }
+
+            return {message: "Storages updated"}
+        } catch (e) {
             return {error: e.message}
         }
     }

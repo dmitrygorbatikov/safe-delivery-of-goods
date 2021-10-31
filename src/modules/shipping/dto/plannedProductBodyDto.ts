@@ -1,5 +1,6 @@
 import {ApiProperty} from "@nestjs/swagger";
 import {Prop} from "@nestjs/mongoose";
+import {ShippingGoodsDto} from "./shippingGoodsDto";
 
 export class PlannedProductBodyDto {
     @ApiProperty({
@@ -21,7 +22,7 @@ export class PlannedProductBodyDto {
         example: '23452ttfe3653tegf3'
     })
     @Prop()
-    goods: Array<any>
+    goods: Array<ShippingGoodsDto>
 
     @ApiProperty({
         description: 'managerId',

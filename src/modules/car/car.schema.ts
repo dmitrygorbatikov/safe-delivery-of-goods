@@ -1,6 +1,7 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
-import { Document } from 'mongoose'
+import {Prop, Schema, SchemaFactory} from '@nestjs/mongoose'
+import {Document} from 'mongoose'
 import {ApiProperty} from "@nestjs/swagger";
+import {CarIndicatorsDto} from "./dto/carIndicatorsDto";
 
 export type CarDocument = Car & Document
 
@@ -32,7 +33,7 @@ export class Car {
         example: []
     })
     @Prop()
-    indicators: Array<any>
+    indicators: Array<CarIndicatorsDto>
 
     @ApiProperty({
         description: 'price',

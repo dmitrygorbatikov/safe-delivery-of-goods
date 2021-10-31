@@ -1,6 +1,7 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
-import { Document } from 'mongoose'
+import {Prop, Schema, SchemaFactory} from '@nestjs/mongoose'
+import {Document} from 'mongoose'
 import {ApiProperty} from "@nestjs/swagger";
+import {StorageIndicatorsDto} from "./dto/storageIndicatorsDto";
 
 export type StorageDocument = Storage & Document
 
@@ -25,7 +26,7 @@ export class Storage {
         example: []
     })
     @Prop()
-    indicators: Array<any>
+    indicators: Array<StorageIndicatorsDto>
 
     @ApiProperty({
         description: 'registerDate',

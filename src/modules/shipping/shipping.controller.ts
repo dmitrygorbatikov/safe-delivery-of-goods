@@ -1,14 +1,16 @@
 import {Body, Controller, Headers, Post, Put, Query} from '@nestjs/common';
 import {ShippingService} from "./shipping.service";
-import {ErrorsEnum, ShippingStatusEnum} from "../../enums/enums";
-import {ApiBody, ApiHeader, ApiQuery} from "@nestjs/swagger";
+import {CarStatusEnum, ErrorsEnum, ProductEnum, ShippingStatusEnum} from "../../enums/enums";
+import {ApiBody, ApiHeader, ApiQuery, ApiTags} from "@nestjs/swagger";
 import {ManagerService} from "../manager/manager.service";
 import {getRegisterDate} from "../../helper/functions";
 import {PlannedProductBodyDto} from "./dto/plannedProductBodyDto";
 import {CarService} from "../car/car.service";
 import {DriverService} from "../driver/driver.service";
 import {ProductService} from "../product/product.service";
+import {StorageService} from "../storage/storage.service";
 
+@ApiTags('shipping')
 @Controller('shipping')
 export class ShippingController {
     constructor(
@@ -16,7 +18,8 @@ export class ShippingController {
         private managerService: ManagerService,
         private carService: CarService,
         private driverService: DriverService,
-        private productService: ProductService
+        private productService: ProductService,
+        private storageService: StorageService,
     ) {
     }
 
@@ -43,6 +46,16 @@ export class ShippingController {
             if (!driver) {
                 return {error: "Driver not found"}
             }
+            let goodsWeightSum = 0
+            for (let i = 0; i < goods.length; i++) {
+                goodsWeightSum += goods[i].weight
+            }
+            if (goodsWeightSum > ProductEnum.maxWeight) {
+                return {error: `Goods weight can't be more than ${ProductEnum.maxWeight}`}
+            }
+            if (car.carryingCapacity < goodsWeightSum) {
+                return {error: `Goods weight can't be more than car carrying capacity(${car.carryingCapacity})`}
+            }
 
             const shipping = await this.shippingService.create({
                 arrivalTime: 0,
@@ -66,12 +79,15 @@ export class ShippingController {
             return {error: e.message}
         }
     }
-    
+
     @ApiQuery({
         name: 'id'
     })
+    @ApiHeader({
+        name: 'token'
+    })
     @Put('/sent/:id')
-    public async setProduct(@Headers() headers, @Query() query) {
+    public async sentProduct(@Headers() headers, @Query() query) {
         try {
             const {id} = query
             const driver = await this.driverService.checkDriverRole(headers.token)
@@ -82,8 +98,13 @@ export class ShippingController {
             if (!shipping) {
                 return {error: 'Shipping not found'}
             }
-            shipping.dispatchTime = getRegisterDate()
-            shipping.status = ShippingStatusEnum.sent
+            const car = await this.carService.findById(shipping.carId)
+            if (!car) {
+                return {error: "Car not found"}
+            }
+            car.status = CarStatusEnum.onRoad
+            shipping.arrivalTime = getRegisterDate()
+            shipping.status = ShippingStatusEnum.delivered
             shipping.save()
             return shipping
 
@@ -92,4 +113,55 @@ export class ShippingController {
         }
     }
 
+    @ApiQuery({
+        name: 'id'
+    })
+    @ApiHeader({
+        name: 'token'
+    })
+    @Put('/delivered/:id')
+    public async deliveredProduct(@Headers() headers, @Query() query) {
+        try {
+            const {id} = query
+            const driver = await this.driverService.checkDriverRole(headers.token)
+            if (!driver) {
+                return {error: ErrorsEnum.notEnoughRights}
+            }
+            const shipping = await this.shippingService.findById(id)
+            if (!shipping) {
+                return {error: 'Shipping not found'}
+            }
+            shipping.arrivalTime = getRegisterDate()
+            shipping.status = ShippingStatusEnum.sent
+            shipping.save()
+            const car = await this.carService.findById(shipping.carId)
+            if (!car) {
+                return {error: "Car not found"}
+            }
+            const storage = await this.storageService.findById(shipping.storageTo)
+            if (!storage) {
+                return {error: ErrorsEnum.storageNotFound}
+            }
+            car.storageId = shipping.storageTo
+            car.longitude = storage.longitude
+            car.latitude = storage.latitude
+            car.status = CarStatusEnum.atStorage
+            car.save()
+            const goods = shipping.goods
+            for (let i = 0; i < goods.length; i++) {
+                await this.productService.create({
+                    title: goods[i].title,
+                    weight: goods[i].weight,
+                    carId: "",
+                    registerDate: goods[i].registerDate,
+                    managerId: goods[i].managerId,
+                    storageId: shipping.storageTo
+                })
+            }
+            return shipping
+
+        } catch (e) {
+            return {error: e.message}
+        }
+    }
 }

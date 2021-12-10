@@ -1,7 +1,7 @@
-import {Body, Controller, Headers, Post, Put, Query} from '@nestjs/common';
+import {Body, Controller, Get, Headers, Param, Post, Put, Query} from '@nestjs/common';
 import {ShippingService} from "./shipping.service";
 import {CarStatusEnum, ErrorsEnum, ProductEnum, ShippingStatusEnum} from "../../enums/enums";
-import {ApiBody, ApiHeader, ApiQuery, ApiTags} from "@nestjs/swagger";
+import {ApiBody, ApiHeader, ApiParam, ApiQuery, ApiTags} from "@nestjs/swagger";
 import {ManagerService} from "../manager/manager.service";
 import {getRegisterDate} from "../../helper/functions";
 import {PlannedProductBodyDto} from "./dto/plannedProductBodyDto";
@@ -56,7 +56,6 @@ export class ShippingController {
             if (car.carryingCapacity < goodsWeightSum) {
                 return {error: `Goods weight can't be more than car carrying capacity(${car.carryingCapacity})`}
             }
-
             const shipping = await this.shippingService.create({
                 arrivalTime: 0,
                 carId,
@@ -80,16 +79,39 @@ export class ShippingController {
         }
     }
 
+    @ApiHeader({
+        name:'token'
+    })
     @ApiQuery({
+        name: 'id'
+    })
+    @Get('/driver')
+    public async getShippingByDriver(@Headers() headers, @Query() query) {
+        try{
+            const driver = await this.driverService.checkDriverRole(headers.token)
+            if (!driver) {
+                return {error: "Driver not found"}
+            }
+            if(query.search && query.search !== ''){
+                return {shipping: await this.shippingService.findByDriverIdWithSearch(driver._id, query.search)}
+            }
+            return {shipping: await this.shippingService.findByDriver(driver._id)}
+        }
+        catch (e) {
+            return {error: e.message}
+        }
+    }
+
+    @ApiParam({
         name: 'id'
     })
     @ApiHeader({
         name: 'token'
     })
     @Put('/sent/:id')
-    public async sentProduct(@Headers() headers, @Query() query) {
+    public async sentProduct(@Headers() headers, @Param() params) {
         try {
-            const {id} = query
+            const {id} = params
             const driver = await this.driverService.checkDriverRole(headers.token)
             if (!driver) {
                 return {error: ErrorsEnum.notEnoughRights}
@@ -104,9 +126,9 @@ export class ShippingController {
             }
             car.status = CarStatusEnum.onRoad
             shipping.arrivalTime = getRegisterDate()
-            shipping.status = ShippingStatusEnum.delivered
+            shipping.status = ShippingStatusEnum.sent
             shipping.save()
-            return shipping
+            return {shipping}
 
         } catch (e) {
             return {error: e.message}
@@ -119,7 +141,7 @@ export class ShippingController {
     @ApiHeader({
         name: 'token'
     })
-    @Put('/delivered/:id')
+    @Put('/delivered')
     public async deliveredProduct(@Headers() headers, @Query() query) {
         try {
             const {id} = query
@@ -132,7 +154,7 @@ export class ShippingController {
                 return {error: 'Shipping not found'}
             }
             shipping.arrivalTime = getRegisterDate()
-            shipping.status = ShippingStatusEnum.sent
+            shipping.status = ShippingStatusEnum.delivered
             shipping.save()
             const car = await this.carService.findById(shipping.carId)
             if (!car) {
@@ -158,9 +180,26 @@ export class ShippingController {
                     storageId: shipping.storageTo
                 })
             }
-            return shipping
+            return {shipping}
 
         } catch (e) {
+            return {error: e.message}
+        }
+    }
+
+    @Get()
+    public async getShippingList(@Headers() headers, @Query() query) {
+        try{
+            const manager = await this.managerService.checkManagerRole(headers.token)
+            if (!manager) {
+                return {error: ErrorsEnum.notEnoughRights}
+            }
+            if(query.search && query.search !== ''){
+                return {shipping: await this.shippingService.findByManagerIdWithSearch(manager._id, query.search)}
+            }
+            return {shipping: await this.shippingService.findByManager(manager._id)}
+        }
+        catch (e) {
             return {error: e.message}
         }
     }

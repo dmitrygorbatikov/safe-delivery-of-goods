@@ -1,11 +1,14 @@
-import {Body, Controller, Get, Headers, Param, Post, Put} from '@nestjs/common';
+import {Body, Controller, Get, Headers, Param, Post, Put, Query} from '@nestjs/common';
 import {StorageService} from "./storage.service";
 import {ApiBody, ApiCreatedResponse, ApiHeader, ApiParam, ApiTags} from "@nestjs/swagger";
 import {ManagerService} from "../manager/manager.service";
 import {CreateStorageBodyDto} from "./dto/createStorageBodyDto";
 import {ErrorsEnum} from "../../enums/enums";
 import {getRandomStorageIndicators, getRegisterDate} from "../../helper/functions";
-import {Storage} from "./storage.schema";
+import {Storage, StorageDocument} from "./storage.schema";
+import {getRepository} from "typeorm";
+import {Manager} from "../manager/manager.schema";
+import {Model} from "mongoose";
 
 @ApiTags('storage')
 @Controller('storage')
@@ -25,6 +28,7 @@ export class StorageController {
     @Post()
     public async createStorage(@Body() body: CreateStorageBodyDto, @Headers() headers) {
         try {
+
             const {latitude, longitude, title, address} = body
             const manager = await this.managerService.checkManagerRole(headers.token)
             if (!manager) {
@@ -50,13 +54,20 @@ export class StorageController {
         name: 'token'
     })
     @Get('/manager')
-    public async getStoragesByManager(@Headers() headers) {
+    public async getStoragesByManager(@Headers() headers, @Query() query) {
         try {
             const manager = await this.managerService.checkManagerRole(headers.token)
             if (!manager) {
                 return {error: ErrorsEnum.notEnoughRights}
             }
-            return {storages: await this.storageService.findByManager(manager._id)}
+            if (query.search && query.search !== '') {
+                return {
+                    storages: await this.storageService.findByManagerWithSearch(manager._id, query.search),
+                }
+            }
+            return {
+                storages: await this.storageService.findByManager(manager._id),
+            }
         } catch (e) {
             return {error: e.message}
         }

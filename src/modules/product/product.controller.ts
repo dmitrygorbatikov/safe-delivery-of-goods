@@ -1,4 +1,4 @@
-import {Body, Controller, Get, Headers, Param, Post} from '@nestjs/common';
+import {Body, Controller, Get, Headers, Param, Post, Query} from '@nestjs/common';
 import {ProductService} from "./product.service";
 import {CreateProductBodyDto} from "./dto/createProductBodyDto";
 import {ManagerService} from "../manager/manager.service";
@@ -102,14 +102,17 @@ export class ProductController {
         name: 'token'
     })
     @Get()
-    public async getProductsByManager(@Headers() headers) {
+    public async getProductsByManager(@Headers() headers, @Query() query) {
         try {
             const manager = await this.managerService.checkManagerRole(headers.token)
             if (!manager) {
                 return {error: ErrorsEnum.notEnoughRights}
             }
-            const products = await this.productService.findByManager(manager._id)
-            return {products}
+            if(query.search && query.search !== ''){
+                return {products: await this.productService.findByManagerIdWithSearch(manager._id, query.search)}
+            }
+
+            return {products: await this.productService.findByManager(manager._id)}
         } catch (e) {
             return {error: e.message}
         }

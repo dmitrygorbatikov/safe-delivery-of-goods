@@ -22,6 +22,10 @@ export class CarService {
         return this.carModel.find({managerId})
     }
 
+    public findByManagerIdWithSearch(managerId: string, search: string) {
+        return this.carModel.find({managerId, number: {$regex: search}})
+    }
+
     public find() {
         return this.carModel.find()
     }

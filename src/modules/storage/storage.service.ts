@@ -27,6 +27,10 @@ export class StorageService {
         return this.storageModel.find({managerId})
     }
 
+    public findByManagerWithSearch(managerId: string, search: string) {
+        return this.storageModel.find({managerId, address: {$regex: search}})
+    }
+
     public updateStorageStatistic(
         _id: string,
         body: { indicators: StorageIndicatorsDto[] },

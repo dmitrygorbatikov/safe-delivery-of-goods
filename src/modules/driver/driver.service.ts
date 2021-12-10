@@ -21,6 +21,14 @@ export class DriverService {
         return this.driverModel.find({managerId})
     }
 
+    public findByStorageId(storageId: string) {
+        return this.driverModel.find({storageId})
+    }
+
+    public findByManagerIdWithSearch(managerId: string, search: string) {
+        return this.driverModel.find({managerId, email: {$regex: search}})
+    }
+
     public findById(_id: string) {
         return this.driverModel.findById(_id)
     }
@@ -36,5 +44,16 @@ export class DriverService {
             return false
         }
         return this.findById(id);
+    }
+    public findByIdAndUpdateDriver(body: any, id: string) {
+        return this.driverModel.findByIdAndUpdate(id, body)
+    }
+    public checkDriverRoleAndId(token: string) {
+        const decodeToken = this.authService.decodeToken(token)
+        const { role, id } = decodeToken
+        if (role !== RolesEnum.driver) {
+            return false
+        }
+        return id
     }
 }

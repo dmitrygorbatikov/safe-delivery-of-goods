@@ -1,4 +1,4 @@
-import {Controller, Get, Headers} from '@nestjs/common';
+import {Body, Controller, Get, Headers, Put} from '@nestjs/common';
 import {ManagerService} from "./manager.service";
 import {AuthService} from "../auth/auth.service";
 import {ApiHeader, ApiTags} from "@nestjs/swagger";
@@ -20,6 +20,21 @@ export class ManagerController {
                 return {error: "Manager not found"}
             }
             return {manager}
+        } catch (e) {
+            return {error: e.message}
+        }
+    }
+
+    @Put()
+    public async updateManagerProfile(@Headers() headers, @Body() body) {
+        try {
+            const id = await this.managerService.checkManagerRoleAndId(headers.token)
+            if (!id) {
+                return {error: "Manager not found"}
+            }
+            await this.managerService.findByIdAndUpdateManager(body, id)
+            const newManager = await this.managerService.findById(id)
+            return {manager: newManager}
         } catch (e) {
             return {error: e.message}
         }

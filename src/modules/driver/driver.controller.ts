@@ -1,4 +1,4 @@
-import {Body, Controller, Post, Headers, Get, Param} from '@nestjs/common';
+import {Body, Controller, Post, Headers, Get, Param, Query, Put} from '@nestjs/common';
 import {DriverService} from "./driver.service";
 import {ManagerService} from "../manager/manager.service";
 import {AuthService} from "../auth/auth.service";
@@ -8,11 +8,12 @@ import {ErrorsEnum, RolesEnum} from "../../enums/enums";
 import {getRegisterDate} from "../../helper/functions";
 import {LoginDriverBodyDto} from "./dto/loginDriverBodyDto";
 import {Driver} from "./driver.schema";
+import {StorageService} from "../storage/storage.service";
 
 @ApiTags('driver')
 @Controller('driver')
 export class DriverController {
-    constructor(private driverService: DriverService, private managerService: ManagerService, private authService: AuthService) {
+    constructor(private driverService: DriverService, private managerService: ManagerService, private storageService: StorageService, private authService: AuthService) {
     }
 
     @ApiHeader({
@@ -135,13 +136,55 @@ export class DriverController {
         type: Driver
     })
     @Get()
-    public async getDriversListByManager(@Headers() headers) {
+    public async getDriversListByManager(@Headers() headers, @Query() query) {
         try {
             const manager = await this.managerService.checkManagerRole(headers.token)
             if (!manager) {
                 return {error: ErrorsEnum.notEnoughRights}
             }
+            if(query.search && query.search !== ''){
+                return { drivers: await this.driverService.findByManagerIdWithSearch(manager._id, query.search)}
+            }
             return { drivers: await this.driverService.findByManager(manager._id)}
+        } catch (e) {
+            return {error: e.message}
+        }
+    }
+
+    @ApiHeader({
+        name: 'token'
+    })
+    @ApiParam({
+        name: 'id'
+    })
+    @Get('/storage/list/:id')
+    public async getDriversListByStorageId(@Headers() headers, @Param() params) {
+        try {
+            const {id} = params
+            const manager = await this.managerService.checkManagerRole(headers.token)
+            if (!manager) {
+                return {error: ErrorsEnum.notEnoughRights}
+            }
+            const storage = await this.storageService.findById(id)
+            if (!storage) {
+                return {error: ErrorsEnum.storageNotFound}
+            }
+            return { drivers: await this.driverService.findByStorageId(manager._id)}
+        } catch (e) {
+            return {error: e.message}
+        }
+    }
+
+    @Put()
+    public async updateDriverProfile(@Headers() headers, @Body() body) {
+        try {
+            const id = await this.driverService.checkDriverRoleAndId(headers.token)
+            if (!id) {
+                return {error: "Driver not found"}
+            }
+            await this.driverService.findByIdAndUpdateDriver(body, id)
+            const newDriver = await this.driverService.findById(id)
+            return {driver: newDriver}
         } catch (e) {
             return {error: e.message}
         }

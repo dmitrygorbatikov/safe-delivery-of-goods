@@ -17,4 +17,19 @@ export class ShippingService {
     public findById(_id: string) {
         return this.shippingModel.findById(_id)
     }
+
+    public findByManager(managerId: string) {
+        return this.shippingModel.find({managerId})
+    }
+
+    public findByManagerIdWithSearch(managerId: string, search: string) {
+        return this.shippingModel.find({managerId, status: {$regex: search}})
+    }
+    public findByDriver(driverId: string) {
+        return this.shippingModel.find({driverId})
+    }
+
+    public findByDriverIdWithSearch(driverId: string, search: string) {
+        return this.shippingModel.find({driverId, status: {$regex: search}})
+    }
 }

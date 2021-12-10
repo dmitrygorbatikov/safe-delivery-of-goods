@@ -32,4 +32,16 @@ export class ManagerService {
         }
         return this.findById(id);
     }
+    public checkManagerRoleAndId(token: string) {
+        const decodeToken = this.authService.decodeToken(token)
+        const { role, id } = decodeToken
+        if (role !== RolesEnum.manager) {
+            return false
+        }
+        return id
+    }
+
+    public findByIdAndUpdateManager(body: any, id: string) {
+        return this.managerModel.findByIdAndUpdate(id, body)
+    }
 }

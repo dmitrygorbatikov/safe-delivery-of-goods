@@ -90,11 +90,14 @@ export class CarController {
         name: 'token'
     })
     @Get()
-    public async getAllCarsList(@Param() params, @Headers() headers) {
+    public async getAllCarsList(@Headers() headers, @Query() query) {
         try {
             const manager = await this.managerService.checkManagerRole(headers.token)
             if (!manager) {
                 return {error: ErrorsEnum.notEnoughRights}
+            }
+            if(query.search && query.search !== '') {
+                return {cars: await this.carService.findByManagerIdWithSearch(manager._id, query.search.toLowerCase())}
             }
             return {cars: await this.carService.findByManagerId(manager._id)}
 
@@ -105,6 +108,9 @@ export class CarController {
 
     @ApiHeader({
         name: 'token'
+    })
+    @ApiParam({
+        name: 'id'
     })
     @Get('/storage/:id')
     public async getCarsListByStorageId(@Headers() headers, @Param() params) {

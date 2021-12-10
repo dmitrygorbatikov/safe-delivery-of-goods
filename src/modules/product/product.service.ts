@@ -26,6 +26,10 @@ export class ProductService {
         return this.productModel.find({managerId})
     }
 
+    public findByManagerIdWithSearch(managerId: string, search: string) {
+        return this.productModel.find({managerId, title: {$regex: search}})
+    }
+
     public deleteProductById(id: string) {
         return this.productModel.findByIdAndDelete(id)
     }
